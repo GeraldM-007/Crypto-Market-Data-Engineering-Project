@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:18.3
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: postgres_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+  airflow:
+    image: apache/airflow:latest
+    container_name: airflow
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    command: standalone
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - /home/project/dags:/home/project/dags
+
+volumes:
+  postgres-data:
