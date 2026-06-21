@@ -1,0 +1,14 @@
+#ignore test files
+test*
+test*.py
+#ignore env files
+.env
+.env.*
+
+#ignore virtual environment
+etlenv/
+venv/
+
+#ignore python cache
+__pycache__/
+*.pyc
