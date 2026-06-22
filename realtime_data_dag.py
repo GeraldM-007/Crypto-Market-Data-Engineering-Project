@@ -88,7 +88,7 @@ def realtime_stocks_prices():
         engine = create_engine(f'postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}')
         
         #connect to the database
-        with engine.begine() as conn:
+        with engine.begin() as conn:
             
             #loop through each item of the json output
             for item in realtime_data:
