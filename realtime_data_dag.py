@@ -95,7 +95,7 @@ def realtime_stocks_prices():
                 
                 #write the data into the database table
                 conn.execute(
-                    text("""INSERT INTO realtime_crpto_prices(data) VALUES (:data)"""), {"data": json.dumps(item)}
+                    text("""INSERT INTO realtime_crypto_prices(data) VALUES (:data)"""), {"data": json.dumps(item)}
                 )
     
     #call the trading pairs function and store output
