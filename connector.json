@@ -1,0 +1,34 @@
+#Debezium connects to the transaction logs of the PostgreSQL database and reads row level insert, update and delete events in real-time
+{
+    "name": "postgres-cdc-connector", #name of the connector inside kafka-connect
+
+    #configuring how debezium will work
+    "config": {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector", #tell kafka connect which plugin to load(i.e postgresql)
+      "tasks.max": "1", #maximum number of connector tasks
+      
+      #Database connection details
+      "database.hostname": "postgres", #service name of postgres container
+      "database.port": "5432",
+      "database.user": "debezium", #specific user for debezium on the database
+      "database.password": "12345",
+      "database.dbname": "postgres_db", #database to monitor (the one you are streaming data from)
+
+      #Debezium creates kafka topics name automatically. The prefix is added before table name to mark topics created by debezium
+      "topic.prefix": "test", 
+
+      "table.include.list": "public.table1,public.table2", #specifies the tables to monitor
+      "publication.name": "my_publication", #publication for the PostgreSQL logical replication. Debezium uses this publication to receive changes
+      "publication.autocreate.mode": "filtered", #instructs debezium to create a publication only for the monitored tables
+
+      "plugin.name": "pgoutput", #decoding plugin available for PostgreSQL
+      "snapshot.mode": "initial", #tells the connector to read all existing rows and send to kafka after loading for the first time
+
+      "key.converter": "org.apache.kafka.connect.json.JsonConverter", #serialize message key as json
+      "value.converter": "org.apache.kafka.connect.json.JsonConverter", #serialize message body as json
+
+      #Disable schema information
+      "key.converter.schemas.enable": "false",
+      "value.converter.schemas.enable": "false"
+    }
+  }
