@@ -17,7 +17,7 @@
       #Debezium creates kafka topics name automatically. The prefix is added before table name to mark topics created by debezium
       "topic.prefix": "test", 
 
-      "table.include.list": "public.table1,public.table2", #specifies the tables to monitor
+      "table.include.list": "public.kraken_pairs,public.kraken_ohlc,public.realtime_crypto_prices", #specifies the tables to monitor
       "publication.name": "my_publication", #publication for the PostgreSQL logical replication. Debezium uses this publication to receive changes
       "publication.autocreate.mode": "filtered", #instructs debezium to create a publication only for the monitored tables
 
