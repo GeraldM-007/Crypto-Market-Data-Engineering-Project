@@ -87,7 +87,7 @@ services:
       - kafka
 
   spark-master:
-    image: spark:4.1.2
+    image: apache/spark:3.5.0 #using this version because version 4.12 does not have a compatible cassandra connector
     container_name: spark-master
     hostname: spark-master
     command: >
@@ -98,7 +98,7 @@ services:
       - "7077:7077"   # Spark Master
 
   spark-worker:
-    image: spark:4.1.2
+    image: apache/spark:3.5.0
     container_name: spark-worker
     hostname: spark-worker
     depends_on:
@@ -109,7 +109,7 @@ services:
       spark://spark-master:7077
 
   spark-submit:
-    image: spark:4.1.2
+    image: apache/spark:3.5.0
     container_name: spark-submit
     hostname: spark-submit
     depends_on:
@@ -117,9 +117,26 @@ services:
       - spark-worker
       - kafka
     volumes:
-      - ./submit.sh:/opt/spark/work-dir/submit.sh
-      - ./spark.py:/opt/spark/work-dir/spark.py
+      - ./submit.sh:/opt/spark/work-dir
+
     command: sh /opt/spark/work-dir/submit.sh
+
+  cassandra:
+    image: cassandra:5.0
+    container_name: cassandra
+    hostname: cassandra
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: CryptoCluster
+      CASSANDRA_DC: datacenter1
+      CASSANDRA_RACK: rack1
+
+      MAX_HEAP_SIZE: 1000M
+      HEAP_NEWSIZE: 100M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
 
 volumes:
   postgres-data:
+  cassandra-data:
