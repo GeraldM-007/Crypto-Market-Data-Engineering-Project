@@ -137,10 +137,6 @@ test.public.kraken_ohlc
 test.public.kraken_ticker
 ```
 
-**Note** 
-### connector.json
-Json doesnot support comments. Remove all the "comments" after cloning the repository, they are only ment for explanation
-
 ---
 
 ## Step 3 – Streaming
@@ -180,21 +176,9 @@ Flatten nested arrays
     ↓
 Create structured DataFrame
 ```
+Example output:
 
-Output schema:
-
-| Column |
-|---------|
-| symbol |
-| candle_time |
-| open |
-| high |
-| low |
-| close |
-| volume |
-| vwap |
-| trades |
-| ingestion_time |
+<img width="1002" height="443" alt="sparkoutput" src="https://github.com/user-attachments/assets/06ddca6e-132b-468d-9c02-c334d5712eb4" />
 
 ---
 
@@ -225,64 +209,14 @@ Spark writes each micro-batch into Apache Cassandra using the Spark Cassandra Co
 # Cassandra Schema
 
 ## OHLC Table
-
-```sql
-CREATE TABLE cryptoproject.ohlc (
-
-    symbol text,
-
-    candle_time timestamp,
-
-    open double,
-
-    high double,
-
-    low double,
-
-    close double,
-
-    vwap double,
-
-    volume double,
-
-    trades int,
-
-    ingestion_time timestamp,
-
-    PRIMARY KEY ((symbol), candle_time)
-
-) WITH CLUSTERING ORDER BY (candle_time DESC);
-```
+<img width="847" height="317" alt="table" src="https://github.com/user-attachments/assets/96c6a348-f08f-445e-b789-e9fe2239fff9" />
 
 ---
 
 ## Ticker Table
 
 Example schema:
-
-```sql
-CREATE TABLE cryptoproject.ticker (
-
-    symbol text,
-
-    ingestion_time timestamp,
-
-    ask_price double,
-
-    ask_volume double,
-
-    bid_price double,
-
-    bid_volume double,
-
-    last_trade_price double,
-
-    last_trade_volume double,
-
-    PRIMARY KEY ((symbol), ingestion_time)
-
-) WITH CLUSTERING ORDER BY (ingestion_time DESC);
-```
+<img width="1163" height="333" alt="realtime_table" src="https://github.com/user-attachments/assets/e44670ae-340c-4ed3-b9d5-599668e8f583" />
 
 ---
 
@@ -297,7 +231,7 @@ docker compose up -d
 Verify containers
 
 ```bash
-docker ps
+docker ps -a
 ```
 
 Useful services:
@@ -325,26 +259,15 @@ The Spark application automatically:
 ---
 
 # Example Cassandra Query
-
-Latest candles for Bitcoin:
-
-```sql
-SELECT *
-FROM cryptoproject.ohlc
-WHERE symbol='BTCUSD'
-LIMIT 20;
-```
-
-Latest ticker values:
-
-```sql
-SELECT *
-FROM cryptoproject.ticker
-WHERE symbol='BTCUSD'
-LIMIT 20;
-```
+<img width="1240" height="603" alt="ohlc_output" src="https://github.com/user-attachments/assets/be4f29f8-2057-4062-b446-d4d16316964d" />
 
 ---
+
+# N/B
+
+### connector.json
+Json doesnot support comments. Remove all the "comments" after cloning the repository, they are only ment for explanation
+
 
 # Learning Outcomes
 
@@ -360,5 +283,4 @@ This project demonstrates:
 - Modular Spark application development
 
 # License
-
 This project is licensed under the MIT License.
