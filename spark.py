@@ -1,9 +1,10 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
+from load import write_stream_to_cassandra
 
 #create a spark application named crypto and load the kafka-connector
-spark = SparkSession.builder.appName("crypto").config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.0").getOrCreate()
+spark = SparkSession.builder.appName("crypto").getOrCreate()
 
 #readstream tell spark to use structured streaming instead of onetime batch read
 ohlc_stream_df = (
@@ -15,7 +16,7 @@ ohlc_stream_df = (
     .load() #tells spark to create a streaming dataframe with all the options provided
 )
 
-#At this point, nothing is spark only builds the executing plan and reading begins only when a streaming query is executed
+#At this point, nothing is created yet, spark only builds the executing plan and reading begins only when a streaming query is executed
 
 #To see the data, convert the kafka messages from binary to string
 #ohlc_df = ohlc_stream_df.select(col("value").cast("string").alias("message"))
@@ -45,9 +46,9 @@ debezium_schema = StructType([
 #parse the debezium json
 debezium_df = (
     ohlc_stream_df
-    #kafka stores messages as bytes but spark cannot parse bytes as JSON. Convert the binary to String
+    #kafka stores messages as bytes but spark cannot parse bytes as JSON. Convert the bytes to String and rename resulting column to json
     .selectExpr("CAST(value AS STRING) AS json")
-    #convert the created JSON string into a spark struct
+    #convert the created JSON string into a spark struct (spark sql column) called record
     .select(from_json(col("json"), debezium_schema).alias("record"))
     #ignore delete events because they have 'after:null'
     .filter(col("record.after").isNotNull())
@@ -90,34 +91,27 @@ pair_df = pair_df.withColumn(
 
 final_ohlc_df = pair_df.select(
     col("symbol"),
-
-    col("ohlc")[0][0].cast("long").alias("time"),
-
+    to_timestamp(from_unixtime(col("ohlc")[0][0].cast("long"))).alias("candle_time"), #converts the candle time to timestamp from unix format
     col("ohlc")[0][1].cast("double").alias("open"),
-
     col("ohlc")[0][2].cast("double").alias("high"),
-
     col("ohlc")[0][3].cast("double").alias("low"),
-
     col("ohlc")[0][4].cast("double").alias("close"),
-
     col("ohlc")[0][5].cast("double").alias("vwap"),
-
     col("ohlc")[0][6].cast("double").alias("volume"),
-
     col("ohlc")[0][7].cast("int").alias("trades"),
-
-    col("timestamp")
+    to_timestamp(col("timestamp"), "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").alias("ingestion_time") #convert timestamp to data type timestamp
 )
 
 # Write Stream
 
-query = (
+console_query = (
     final_ohlc_df.writeStream
     .format("console")
     .outputMode("append")
     .option("truncate", False)
     .start()
 )
+
+query = write_stream_to_cassandra(final_ohlc_df)
 
 query.awaitTermination()
