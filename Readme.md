@@ -2,8 +2,6 @@
 
 A production-style real-time data engineering pipeline that ingests cryptocurrency market data from the Kraken API, captures database changes using Debezium Change Data Capture (CDC), streams data through Apache Kafka, performs real-time transformations using Apache Spark Structured Streaming, and stores the processed data in Apache Cassandra for fast querying and analytics.
 
----
-
 ## Project Architecture
 
 ```text
@@ -56,8 +54,6 @@ A production-style real-time data engineering pipeline that ingests cryptocurren
                      Apache Cassandra
 ```
 
----
-
 ## Features
 
 - Real-time cryptocurrency data ingestion
@@ -73,8 +69,6 @@ A production-style real-time data engineering pipeline that ingests cryptocurren
 - Modular Spark architecture
 - Containerized infrastructure using Docker Compose
 
----
-
 # Technology Stack
 
 | Component | Purpose |
@@ -87,8 +81,6 @@ A production-style real-time data engineering pipeline that ingests cryptocurren
 | Apache Cassandra | NoSQL data storage |
 | Docker Compose | Infrastructure deployment |
 | Python | ETL implementation |
-
----
 
 # Project Structure
 
@@ -107,7 +99,119 @@ A production-style real-time data engineering pipeline that ingests cryptocurren
 ├── README.md
 ```
 
----
+# How to Run Locally
+
+## 1. Clone the repository
+
+```bash
+https://github.com/GeraldM-007/Crypto-Market-Data-Engineering-Project.git
+
+cd Crypto-Market-Data-Engineering-Project
+```
+
+## 2. Configure environment variables
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+USER = 'postgres'
+PASSWORD = 'strongpassword'
+HOST = 'database IP/connection string'
+PORT = '5432'
+DATABASE = 'postgres'
+```
+
+## 3. Start the Docker containers
+
+```bash
+docker compose up -d
+```
+
+This starts:
+
+- PostgreSQL
+- Kafka
+- Kafka UI
+- Debezium Connect
+- Spark Master
+- Spark Worker
+- Spark Submit
+- Cassandra
+
+## 4. Create the Cassandra keyspace and tables
+
+```bash
+docker exec -it cassandra cqlsh
+```
+
+Run the schema:
+
+```sql
+CREATE KEYSPACE cryptoproject
+WITH replication = {
+'class':'SimpleStrategy',
+'replication_factor':1
+};
+```
+
+Create the required tables.
+
+## 5. Configure Debezium
+
+Register the PostgreSQL connector.
+
+```bash
+curl -X POST http://localhost:8083/connectors \
+-H "Content-Type: application/json" \
+-d @connector.json
+```
+
+## 6. Start the Airflow DAG
+
+Open Airflow:
+
+```
+http://localhost:8080
+```
+
+Enable the DAG.
+
+Airflow will begin:
+
+- Pulling Kraken market data
+- Loading it into PostgreSQL
+
+## 7. Spark Streaming
+
+Spark automatically starts through `submit.sh`.
+
+It continuously:
+
+- Reads Kafka topics
+- Parses Debezium CDC events
+- Extracts the market data
+- Performs transformations
+- Writes the transformed records into Cassandra
+
+## 8. Verify the results
+
+Open Cassandra:
+
+```bash
+docker exec -it cassandra cqlsh
+```
+
+Example:
+
+```sql
+USE cryptoproject;
+
+SELECT * FROM ohlc LIMIT 20;
+
+SELECT * FROM ticker LIMIT 20;
+```
 
 # Data Flow
 
@@ -122,8 +226,6 @@ Example datasets:
 
 The extracted data is inserted into PostgreSQL staging tables.
 
----
-
 ## Step 2 – Change Data Capture
 
 Debezium monitors PostgreSQL transaction logs.
@@ -137,8 +239,6 @@ test.public.kraken_ohlc
 test.public.kraken_ticker
 ```
 
----
-
 ## Step 3 – Streaming
 
 Apache Spark subscribes to Kafka topics using Structured Streaming.
@@ -150,8 +250,6 @@ Kafka
       ↓
 Spark.readStream()
 ```
-
----
 
 ## Step 4 – Transformation
 
@@ -180,8 +278,6 @@ Example output:
 
 <img width="1002" height="443" alt="sparkoutput" src="https://github.com/user-attachments/assets/06ddca6e-132b-468d-9c02-c334d5712eb4" />
 
----
-
 For Ticker:
 
 ```
@@ -198,27 +294,19 @@ Extract bid, ask, last trade, volume, etc.
 Write to Cassandra
 ```
 
----
-
 ## Step 5 – Loading
 
 Spark writes each micro-batch into Apache Cassandra using the Spark Cassandra Connector.
-
----
 
 # Cassandra Schema
 
 ## OHLC Table
 <img width="847" height="317" alt="table" src="https://github.com/user-attachments/assets/96c6a348-f08f-445e-b789-e9fe2239fff9" />
 
----
-
 ## Ticker Table
 
 Example schema:
 <img width="1163" height="333" alt="realtime_table" src="https://github.com/user-attachments/assets/e44670ae-340c-4ed3-b9d5-599668e8f583" />
-
----
 
 # Running the Project
 
@@ -245,7 +333,6 @@ Useful services:
 | PostgreSQL | 5432 |
 | Cassandra | 9042 |
 
----
 
 # Spark Streaming
 
@@ -256,14 +343,12 @@ The Spark application automatically:
 - transforms Kraken payloads
 - writes processed records into Cassandra
 
----
-
 # Example Cassandra Query
 <img width="1240" height="603" alt="ohlc_output" src="https://github.com/user-attachments/assets/be4f29f8-2057-4062-b446-d4d16316964d" />
 
 ---
 
-# N/B
+# NOTE
 
 ### connector.json
 Json doesnot support comments. Remove all the "comments" after cloning the repository, they are only ment for explanation
